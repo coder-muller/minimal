@@ -1,6 +1,19 @@
+import { auth } from "@/lib/auth"
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
 import { LoginForm } from "@/components/auth/login/login-form";
 
-export default function Login() {
+export default async function Login() {
+
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    })
+
+    if (session) {
+        redirect("/dashboard")
+    }
+
     return (
         <div className="flex flex-col gap-4 w-full max-w-md">
             <div className="flex flex-col">

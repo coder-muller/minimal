@@ -12,7 +12,11 @@ import { Spinner } from "@/components/ui/spinner"
 import { OAuthButtons } from "@/components/auth/oauth-buttons"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+
+import { authClient } from "@/lib/auth-client"
+import { getAuthErrorMessage } from "@/lib/auth-errors"
 
 const registerFormSchema = z.object({
     name: z
@@ -35,6 +39,8 @@ const registerFormSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerFormSchema>
 
 export function RegisterForm() {
+    const router = useRouter()
+
     const form = useForm<RegisterFormValues>({
         resolver: zodResolver(registerFormSchema),
         defaultValues: {
@@ -45,9 +51,18 @@ export function RegisterForm() {
     })
 
     const onSubmit = async (data: RegisterFormValues) => {
-        await new Promise((resolve) => setTimeout(resolve, 1500))
-        console.log(data)
-        toast.success("conta criada com sucesso")
+        await authClient.signUp.email({
+            email: data.email,
+            password: data.password,
+            name: data.name,
+        }, {
+            onSuccess: () => {
+                router.push("/dashboard")
+            },
+            onError: (error) => {
+                toast.error(getAuthErrorMessage(error))
+            }
+        })
     }
 
     const isSubmitting = form.formState.isSubmitting

@@ -12,7 +12,11 @@ import { Spinner } from "@/components/ui/spinner"
 import { OAuthButtons } from "@/components/auth/oauth-buttons"
 
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
+
+import { authClient } from "@/lib/auth-client"
+import { getAuthErrorMessage } from "@/lib/auth-errors"
 
 const loginFormSchema = z.object({
     email: z.email({ message: "email inválido" }),
@@ -22,6 +26,8 @@ const loginFormSchema = z.object({
 type LoginFormValues = z.infer<typeof loginFormSchema>
 
 export function LoginForm() {
+    const router = useRouter()
+    
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginFormSchema),
         defaultValues: {
@@ -31,9 +37,17 @@ export function LoginForm() {
     })
 
     const onSubmit = async (data: LoginFormValues) => {
-        await new Promise((resolve) => setTimeout(resolve, 1500))
-        console.log(data)
-        toast.success("login realizado com sucesso")
+        await authClient.signIn.email({
+            email: data.email,
+            password: data.password,
+        }, {
+            onSuccess: () => {
+                router.push("/dashboard")
+            },
+            onError: (error) => {
+                toast.error(getAuthErrorMessage(error))
+            }
+        })
     }
 
     const isSubmitting = form.formState.isSubmitting
